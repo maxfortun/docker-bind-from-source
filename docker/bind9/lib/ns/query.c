@@ -2499,6 +2499,9 @@ prefetch_done(isc_task_t *task, isc_event_t *event) {
 
 	CTRACE(ISC_LOG_DEBUG(3), "prefetch_done");
 
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: prefetch_done");
 	LOCK(&client->query.fetchlock);
 	if (client->query.prefetch != NULL) {
 		INSIST(devent->fetch == client->query.prefetch);
@@ -2559,6 +2562,9 @@ query_prefetch(ns_client_t *client, dns_name_t *qname,
 
 	isc_nmhandle_attach(client->handle, &client->prefetchhandle);
 	options = client->query.fetchoptions | DNS_FETCHOPT_PREFETCH;
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: dns_resolver_createfetch 1");
 	result = dns_resolver_createfetch(
 		client->view->resolver, qname, rdataset->type, NULL, NULL, NULL,
 		peeraddr, client->message->id, options, 0, NULL, client->task,
@@ -2772,6 +2778,9 @@ query_rpzfetch(ns_client_t *client, dns_name_t *qname, dns_rdatatype_t type) {
 
 	options = client->query.fetchoptions;
 	isc_nmhandle_attach(client->handle, &client->prefetchhandle);
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: dns_resolver_createfetch 2");
 	result = dns_resolver_createfetch(
 		client->view->resolver, qname, type, NULL, NULL, NULL, peeraddr,
 		client->message->id, options, 0, NULL, client->task,
@@ -2890,6 +2899,9 @@ rpz_rrset_find(ns_client_t *client, dns_name_t *name, dns_rdatatype_t type,
 			result = DNS_R_NXRRSET;
 		} else {
 			dns_name_copynf(name, st->r_name);
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: ns_query_recurse 6");
 			result = ns_query_recurse(client, type, st->r_name,
 						  NULL, NULL, resuming);
 			if (result == ISC_R_SUCCESS) {
@@ -5038,6 +5050,9 @@ redirect2(ns_client_t *client, dns_name_t *name, dns_rdataset_t *rdataset,
 		 * Don't loop forever if the lookup failed last time.
 		 */
 		if (!REDIRECT(client)) {
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: ns_query_recurse 7");
 			result = ns_query_recurse(client, qtype, redirectname,
 						  NULL, NULL, true);
 			if (result == ISC_R_SUCCESS) {
@@ -6410,6 +6425,9 @@ ns_query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
 	}
 
 	isc_nmhandle_attach(client->handle, &client->fetchhandle);
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: dns_resolver_createfetch 3");
 	result = dns_resolver_createfetch(
 		client->view->resolver, qname, qtype, qdomain, nameservers,
 		NULL, peeraddr, client->message->id, client->query.fetchoptions,
@@ -8513,6 +8531,9 @@ query_notfound(query_ctx_t *qctx) {
 		 */
 		if (RECURSIONOK(qctx->client)) {
 			INSIST(!REDIRECT(qctx->client));
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: ns_query_recurse 1");
 			result = ns_query_recurse(qctx->client, qctx->qtype,
 						  qctx->client->query.qname,
 						  NULL, NULL, qctx->resuming);
@@ -8708,6 +8729,9 @@ cleanup:
  */
 static isc_result_t
 query_delegation(query_ctx_t *qctx) {
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_delegation");
 	isc_result_t result = ISC_R_UNSET;
 
 	CCTRACE(ISC_LOG_DEBUG(3), "query_delegation");
@@ -8717,14 +8741,23 @@ query_delegation(query_ctx_t *qctx) {
 	qctx->authoritative = false;
 
 	if (qctx->is_zone) {
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_delegation 0");
 		return (query_zone_delegation(qctx));
 	}
 
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_delegation 1");
 	if (qctx->zfname != NULL &&
 	    (!dns_name_issubdomain(qctx->fname, qctx->zfname) ||
 	     (qctx->is_staticstub_zone &&
 	      dns_name_equal(qctx->fname, qctx->zfname))))
 	{
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_delegation 2");
 		/*
 		 * In the following cases use "authoritative"
 		 * data instead of the cache delegation:
@@ -8765,6 +8798,9 @@ query_delegation(query_ctx_t *qctx) {
 		RESTORE(qctx->sigrdataset, qctx->zsigrdataset);
 	}
 
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_delegation_recurse 1");
 	result = query_delegation_recurse(qctx);
 	if (result != ISC_R_COMPLETE) {
 		return (result);
@@ -8807,18 +8843,27 @@ query_delegation_recurse(query_ctx_t *qctx) {
 		/*
 		 * Parent is authoritative for this RDATA type (i.e. DS).
 		 */
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: ns_query_recurse 2");
 		result = ns_query_recurse(qctx->client, qctx->qtype, qname,
 					  NULL, NULL, qctx->resuming);
 	} else if (qctx->dns64) {
 		/*
 		 * Look up an A record so we can synthesize DNS64.
 		 */
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: ns_query_recurse 3");
 		result = ns_query_recurse(qctx->client, dns_rdatatype_a, qname,
 					  NULL, NULL, qctx->resuming);
 	} else {
 		/*
 		 * Any other recursion.
 		 */
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: ns_query_recurse 4");
 		result = ns_query_recurse(qctx->client, qctx->qtype, qname,
 					  qctx->fname, qctx->rdataset,
 					  qctx->resuming);
@@ -10212,6 +10257,9 @@ query_zerottl_refetch(query_ctx_t *qctx) {
 
 	INSIST(!REDIRECT(qctx->client));
 
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: ns_query_recurse 5");
 	result = ns_query_recurse(qctx->client, qctx->qtype,
 				  qctx->client->query.qname, NULL, NULL,
 				  qctx->resuming);
@@ -10393,7 +10441,13 @@ query_dname(query_ctx_t *qctx) {
 		qctx->need_wildcardproof = true;
 	}
 
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_prefetch 0");
 	if (!qctx->is_zone && RECURSIONOK(qctx->client)) {
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_prefetch 1");
 		query_prefetch(qctx->client, qctx->fname, qctx->rdataset);
 	}
 	query_addrrset(qctx, &qctx->fname, &qctx->rdataset, sigrdatasetp,
