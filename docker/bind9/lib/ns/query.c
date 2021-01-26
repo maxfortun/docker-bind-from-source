@@ -8633,6 +8633,9 @@ static isc_result_t
 query_zone_delegation(query_ctx_t *qctx) {
 	isc_result_t result = ISC_R_UNSET;
 
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_zone_delegation 0");
 	CALL_HOOK(NS_QUERY_ZONE_DELEGATION_BEGIN, qctx);
 
 	/*
@@ -8643,6 +8646,9 @@ query_zone_delegation(query_ctx_t *qctx) {
 	    (qctx->options & DNS_GETDB_NOEXACT) != 0 &&
 	    qctx->qtype == dns_rdatatype_ds)
 	{
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_zone_delegation 1");
 		dns_db_t *tdb = NULL;
 		dns_zone_t *tzone = NULL;
 		dns_dbversion_t *tversion = NULL;
@@ -8685,12 +8691,18 @@ query_zone_delegation(query_ctx_t *qctx) {
 			return (query_lookup(qctx));
 		}
 	}
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_zone_delegation 2");
 
 	if (USECACHE(qctx->client) &&
 	    (RECURSIONOK(qctx->client) ||
 	     (qctx->zone != NULL &&
 	      dns_zone_gettype(qctx->zone) == dns_zone_mirror)))
 	{
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_zone_delegation 3");
 		/*
 		 * We might have a better answer or delegation in the
 		 * cache.  We'll remember the current values of fname,
@@ -8713,6 +8725,9 @@ query_zone_delegation(query_ctx_t *qctx) {
 		return (query_lookup(qctx));
 	}
 
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_zone_delegation 4");
 	return (query_prepare_delegation_response(qctx));
 
 cleanup:
