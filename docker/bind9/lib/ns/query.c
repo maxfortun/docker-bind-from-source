@@ -944,6 +944,9 @@ query_validatezonedb(ns_client_t *client, const dns_name_t *name,
 	    !(WANTRECURSION(client) && RECURSIONOK(client)) &&
 	    client->query.authdbset && db != client->query.authdb)
 	{
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: refuse 1");
 		return (DNS_R_REFUSED);
 	}
 
@@ -954,6 +957,9 @@ query_validatezonedb(ns_client_t *client, const dns_name_t *name,
 	 */
 	if (dns_zone_gettype(zone) == dns_zone_staticstub &&
 	    !RECURSIONOK(client)) {
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: refuse 2");
 		return (DNS_R_REFUSED);
 	}
 
@@ -4041,6 +4047,9 @@ rpz_rewrite(ns_client_t *client, dns_rdatatype_t qtype, isc_result_t qresult,
 		break;
 	case DNS_R_DELEGATION:
 	case ISC_R_NOTFOUND:
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: ISC_R_NOTFOUND 1");
 		/*
 		 * If recursion is on, do only tentative rewriting.
 		 * If recursion is off, this the normal and only time we
@@ -5485,6 +5494,9 @@ ns__query_start(query_ctx_t *qctx) {
 			 !RECURSIONOK(qctx->client) &&
 			 (qctx->options & DNS_GETDB_NOEXACT) != 0))
 	{
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query start 1");
 		/*
 		 * This is a non-recursive QTYPE=DS query with QNAME whose
 		 * parent we are not authoritative for.  Check whether we are
@@ -5531,12 +5543,18 @@ ns__query_start(query_ctx_t *qctx) {
 			}
 		}
 	}
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query start 2");
 	/*
 	 * If we did not find a database from which we can answer the query,
 	 * respond with either REFUSED or SERVFAIL, depending on what the
 	 * result of query_getdb() was.
 	 */
 	if (result != ISC_R_SUCCESS) {
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query start 3");
 		if (result == DNS_R_REFUSED) {
 			if (WANTRECURSION(qctx->client)) {
 				inc_stats(qctx->client,
@@ -11847,6 +11865,9 @@ ns_query_start(ns_client_t *client, isc_nmhandle_t *handle) {
 		client->attributes |= NS_CLIENTATTR_NOSETFC;
 	}
 
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: step 1");
 	/*
 	 * Check for multiple question queries, since edns1 is dead.
 	 */
@@ -11855,6 +11876,9 @@ ns_query_start(ns_client_t *client, isc_nmhandle_t *handle) {
 		return;
 	}
 
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: step 2");
 	/*
 	 * Get the question name.
 	 */
@@ -11863,6 +11887,9 @@ ns_query_start(ns_client_t *client, isc_nmhandle_t *handle) {
 		query_error(client, result, __LINE__);
 		return;
 	}
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: step 3");
 	dns_message_currentname(message, DNS_SECTION_QUESTION,
 				&client->query.qname);
 	client->query.origqname = client->query.qname;
@@ -11880,6 +11907,9 @@ ns_query_start(ns_client_t *client, isc_nmhandle_t *handle) {
 		return;
 	}
 
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: step 4");
 	if ((client->sctx->options & NS_SERVER_LOGQUERIES) != 0) {
 		log_query(client, saved_flags, saved_extflags);
 	}
@@ -11894,6 +11924,9 @@ ns_query_start(ns_client_t *client, isc_nmhandle_t *handle) {
 
 	log_tat(client);
 
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: step 5");
 	if (dns_rdatatype_ismeta(qtype)) {
 		switch (qtype) {
 		case dns_rdatatype_any:
@@ -11921,6 +11954,9 @@ ns_query_start(ns_client_t *client, isc_nmhandle_t *handle) {
 			return;
 		}
 	}
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: step 6");
 
 	/*
 	 * Turn on minimal response for (C)DNSKEY and (C)DS queries.
@@ -12027,4 +12063,7 @@ ns_query_start(ns_client_t *client, isc_nmhandle_t *handle) {
 	}
 
 	(void)query_setup(client, qtype);
+				ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: step 99");
 }
