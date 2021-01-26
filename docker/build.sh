@@ -36,21 +36,22 @@ apk --update add \
 	tzdata
 
 mkdir /usr/src
-pushd /usr/src
+cd /usr/src
 
 if [ ! -d $CK_VERSION ]; then
-    curl -sSLO https://github.com/concurrencykit/ck/archive/$CK_VERSION.tar.gz
-    tar -xz $CK_VERSION.tar.gz
-    pushd ck-$CK_VERSION
+    git clone https://github.com/concurrencykit/ck.git
+    cd ck
     ./configure --prefix=/usr
     make
     make install
+    cd -
 fi
 
-ldconfig
-
 git clone https://gitlab.isc.org/isc-projects/bind9.git
+cd bind9
 autoreconf -fi
 ./configure
 make
+make install
+
 
