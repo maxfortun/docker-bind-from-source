@@ -58,6 +58,7 @@
 #include <dns/view.h>
 #include <dns/zone.h>
 #include <dns/zt.h>
+#include <dns/forward.h> 
 
 #include <ns/client.h>
 #include <ns/events.h>
@@ -8695,10 +8696,38 @@ query_zone_delegation(query_ctx_t *qctx) {
 					      NS_LOGMODULE_QUERY,
 					      ISC_LOG_DEBUG(3), "max: query_zone_delegation 2");
 
+	if(qctx->zone == NULL) {
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_zone_delegation zone null");
+	} else {	
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_zone_delegation zone master %d", dns_zone_master);
+				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_zone_delegation zone %d",dns_zone_gettype(qctx->zone));
+
+				isc_result_t max_result;
+				dns_forwarders_t *dnsforwarders = NULL;     
+				max_result = dns_fwdtable_find(qctx->view->fwdtable, qctx->fname, NULL, &dnsforwarders);           
+	                       if (max_result == ISC_R_SUCCESS && !ISC_LIST_EMPTY(dnsforwarders->fwdrs)) {
+					ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
+					      NS_LOGMODULE_QUERY,
+					      ISC_LOG_DEBUG(3), "max: query_zone_delegation have forwarders?");
+             		               // dnsforwarders->fwdpolicy == dns_fwdpolicy_only) { 
+                        	}                                                     
+
+
+
+
+
+	}
+
 	if (USECACHE(qctx->client) &&
 	    (RECURSIONOK(qctx->client) ||
 	     (qctx->zone != NULL &&
-	      dns_zone_gettype(qctx->zone) == dns_zone_mirror)))
+	       dns_zone_gettype(qctx->zone) == dns_zone_mirror)))
 	{
 				ns_client_log(qctx->client, DNS_LOGCATEGORY_SECURITY,
 					      NS_LOGMODULE_QUERY,
