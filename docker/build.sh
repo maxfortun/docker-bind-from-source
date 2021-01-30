@@ -51,6 +51,10 @@ git clone https://gitlab.isc.org/isc-projects/bind9.git
 cd bind9
 autoreconf -fi
 ./configure
+find /usr/local/src/bind9 -name '*.patch' | while read patch; do
+    source=/usr$(echo $patch | sed -e 's#^/usr/local##g' -e 's#.patch$##g')
+    patch $source $patch
+done
 make
 make install
 

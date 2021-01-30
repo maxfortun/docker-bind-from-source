@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-COPY bind9 /usr/local/src/
+COPY bind9 /usr/local/src/bind9
 COPY build.sh /usr/local/bin/
 RUN /usr/local/bin/build.sh
 
