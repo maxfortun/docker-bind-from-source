@@ -11837,6 +11837,13 @@ ns_query_start(ns_client_t *client, isc_nmhandle_t *handle) {
 		return;
 	}
 
+        /*
+                if a zone is a forward-only zone - force recursion
+		regardless of the RD flag in the message
+		RD flag makes no sense in a context of a forward-only zone
+		as a forward-only zone is just a proxy to another name server
+		which is responsible for respecting the RD flag
+        */
 	bool forceForward = false;
 	if(client->view->fwdtable != NULL) {
 		dns_forwarders_t *forwarders = NULL;
@@ -11844,16 +11851,20 @@ ns_query_start(ns_client_t *client, isc_nmhandle_t *handle) {
 		dns_fixedname_t fixed;
 		foundname = dns_fixedname_initname(&fixed);
 
-		result = dns_fwdtable_find(client->view->fwdtable, client->query.qname, foundname, &forwarders);
-		if (result == ISC_R_SUCCESS && !ISC_LIST_EMPTY(forwarders->fwdrs) && forwarders->fwdpolicy == dns_fwdpolicy_only ) {
-			if(foundname != NULL) {
-				char nbuf[DNS_NAME_FORMATSIZE] =  { 0 };
-				dns_name_format(foundname, nbuf,sizeof(nbuf));
-				if(strlen(nbuf) > 1) {
-					forceForward = true;
+		result = dns_fwdtable_find(client->view->fwdtable, client->query.qname,
+						foundname, &forwarders);
+
+		if (result == ISC_R_SUCCESS && !ISC_LIST_EMPTY(forwarders->fwdrs)
+			&& forwarders->fwdpolicy == dns_fwdpolicy_only ) {
+
+				if(foundname != NULL) {
+					char nbuf[DNS_NAME_FORMATSIZE] =  { 0 };
+					dns_name_format(foundname, nbuf,sizeof(nbuf));
+					if(strlen(nbuf) > 1) {
+						forceForward = true;
+					}
 				}
-			}
-        	}
+		}
 	}
 
 	if ((message->flags & DNS_MESSAGEFLAG_RD) != 0 || forceForward) {
