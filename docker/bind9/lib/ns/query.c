@@ -11862,6 +11862,7 @@ ns_query_start(ns_client_t *client, isc_nmhandle_t *handle) {
 					dns_name_format(foundname, nbuf,sizeof(nbuf));
 					if(strlen(nbuf) > 1) {
 						forceForward = true;
+						message->flags |= DNS_MESSAGEFLAG_AA;
 					}
 				}
 		}

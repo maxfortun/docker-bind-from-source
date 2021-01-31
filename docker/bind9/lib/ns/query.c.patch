@@ -1,5 +1,5 @@
---- query.c.bak
-+++ query.c
+--- query.c.orig
++++ /usr/local/src/bind9/lib/ns/query.c
 @@ -58,6 +58,7 @@
  #include <dns/view.h>
  #include <dns/zone.h>
@@ -8,7 +8,7 @@
  
  #include <ns/client.h>
  #include <ns/events.h>
-@@ -11811,7 +11812,51 @@
+@@ -11811,7 +11812,63 @@
  	 */
  	client->cleanup = query_cleanup;
  
@@ -38,6 +38,13 @@
 +		return;
 +	}
 +
++        /*
++                if a zone is a forward-only zone - force recursion
++		regardless of the RD flag in the message
++		RD flag makes no sense in a context of a forward-only zone
++		as a forward-only zone is just a proxy to another name server
++		which is responsible for respecting the RD flag
++        */
 +	bool forceForward = false;
 +	if(client->view->fwdtable != NULL) {
 +		dns_forwarders_t *forwarders = NULL;
@@ -45,23 +52,28 @@
 +		dns_fixedname_t fixed;
 +		foundname = dns_fixedname_initname(&fixed);
 +
-+		result = dns_fwdtable_find(client->view->fwdtable, client->query.qname, foundname, &forwarders);
-+		if (result == ISC_R_SUCCESS && !ISC_LIST_EMPTY(forwarders->fwdrs) && forwarders->fwdpolicy == dns_fwdpolicy_only ) {
-+			if(foundname != NULL) {
-+				char nbuf[DNS_NAME_FORMATSIZE] =  { 0 };
-+				dns_name_format(foundname, nbuf,sizeof(nbuf));
-+				if(strlen(nbuf) > 1) {
-+					forceForward = true;
++		result = dns_fwdtable_find(client->view->fwdtable, client->query.qname,
++						foundname, &forwarders);
++
++		if (result == ISC_R_SUCCESS && !ISC_LIST_EMPTY(forwarders->fwdrs)
++			&& forwarders->fwdpolicy == dns_fwdpolicy_only ) {
++
++				if(foundname != NULL) {
++					char nbuf[DNS_NAME_FORMATSIZE] =  { 0 };
++					dns_name_format(foundname, nbuf,sizeof(nbuf));
++					if(strlen(nbuf) > 1) {
++						forceForward = true;
++						message->flags |= DNS_MESSAGEFLAG_AA;
++					}
 +				}
-+			}
-+        	}
++		}
 +	}
 +
 +	if ((message->flags & DNS_MESSAGEFLAG_RD) != 0 || forceForward) {
  		client->query.attributes |= NS_QUERYATTR_WANTRECURSION;
  	}
  
-@@ -11845,7 +11890,7 @@
+@@ -11845,7 +11902,7 @@
  					      NS_QUERYATTR_CACHEOK);
  		client->attributes |= NS_CLIENTATTR_NOSETFC;
  	} else if ((client->attributes & NS_CLIENTATTR_RA) == 0 ||
@@ -70,7 +82,7 @@
  	{
  		/*
  		 * If the client isn't allowed to recurse (due to
-@@ -11862,31 +11907,6 @@
+@@ -11862,31 +11919,6 @@
  	 */
  	if (message->counts[DNS_SECTION_QUESTION] > 1) {
  		query_error(client, DNS_R_FORMERR, __LINE__);
